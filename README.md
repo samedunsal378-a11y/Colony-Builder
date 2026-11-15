@@ -1,4 +1,3 @@
-[README.md](https://github.com/user-attachments/files/34874786/README.md)
 <div align="center">
 
 # MARS: Colony Builder

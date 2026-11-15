@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>MARS: Colony Builder</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="gl"></canvas>
+  <div id="launchAnim">
+    <svg viewBox="0 0 900 420" aria-hidden="true">
+      <circle cx="60" cy="60" r="1.6" fill="#fff" opacity=".7"/><circle cx="210" cy="40" r="1.2" fill="#fff" opacity=".5"/>
+      <circle cx="420" cy="70" r="1.4" fill="#fff" opacity=".6"/><circle cx="600" cy="30" r="1.1" fill="#fff" opacity=".5"/>
+      <circle cx="330" cy="170" r="1.3" fill="#fff" opacity=".6"/><circle cx="520" cy="230" r="1.2" fill="#fff" opacity=".4"/>
+      <circle cx="850" cy="250" r="1.5" fill="#fff" opacity=".6"/><circle cx="700" cy="330" r="1.1" fill="#fff" opacity=".5"/>
+      <circle cx="150" cy="330" r="70" fill="#2d7fd6"/>
+      <circle cx="122" cy="306" r="24" fill="#4caf50" opacity=".85"/><circle cx="182" cy="350" r="18" fill="#58b862" opacity=".8"/>
+      <circle cx="170" cy="300" r="12" fill="#e9f4ff" opacity=".7"/>
+      <circle cx="760" cy="110" r="46" fill="#c4553a"/>
+      <circle cx="780" cy="92" r="14" fill="#8e3a26" opacity=".7"/><circle cx="742" cy="134" r="9" fill="#e08a5e" opacity=".5"/>
+      <path id="lpath" d="M150,300 Q420,-40 716,118" fill="none" stroke="#ffb07a" stroke-width="2" stroke-dasharray="6 8" opacity=".6"/>
+      <path id="ltrail" d="" fill="none" stroke="#ffd29a" stroke-width="3" stroke-linecap="round" opacity=".9"/>
+      <g id="lrocket">
+        <path id="lflame" d="M-4,12 L0,26 L4,12Z" fill="#ffb347"/>
+        <path d="M0,-18 C6,-12 7,-4 7,6 L7,12 L-7,12 L-7,6 C-7,-4 -6,-12 0,-18Z" fill="#f2f2f2"/>
+        <path d="M-7,6 L-13,14 L-7,12Z M7,6 L13,14 L7,12Z" fill="#d6452a"/>
+        <ellipse cx="0" cy="-4" rx="3" ry="3.5" fill="#2a6fa8"/>
+      </g>
+    </svg>
+    <div class="lst" id="lstage">Fırlatma hazırlığı</div>
+    <div class="lbar"><i id="lbarFill"></i></div>
+    <div class="lhint">Geçmek için tıkla veya Esc / Space</div>
+  </div>
+<div id="subs"><div id="subWho"></div><span id="subLn"></span></div>
+<div id="story"><div class="sky"></div><div class="planet"></div><div id="stWho"></div><div id="stLine"></div><button id="stSkip">Geç ›</button></div>
+<div id="wires" data-noi18n><div id="wplate"><div id="wTitle"></div><svg id="wsvg" viewBox="0 0 420 280"></svg><div id="wHint"></div><button id="wClose"></button><div class="wdoor top"></div><div class="wdoor bot"></div></div></div>
+<div id="intro">
+  <canvas id="introBg"></canvas>
+  <div class="box panel" id="langBox" data-noi18n>
+    <h2 class="title">MARS</h2>
+    <div class="sub">COLONY BUILDER</div>
+    <p>Dil seçin · Choose your language · Elige tu idioma · 언어를 선택하세요 · Sprache wählen</p>
+    <div class="langGrid">
+      <button class="langBtn" data-lang="tr">🇹🇷 Türkçe</button>
+      <button class="langBtn" data-lang="en">🇬🇧 English</button>
+      <button class="langBtn" data-lang="es">🇪🇸 Español</button>
+      <button class="langBtn" data-lang="ko">🇰🇷 한국어</button>
+      <button class="langBtn" data-lang="de">🇩🇪 Deutsch</button>
+    </div>
+  </div>
+  <div class="box panel" id="menuMain" style="display:none">
+    <h2 class="title">MARS</h2>
+    <div class="sub">COLONY BUILDER</div>
+    <p>Mars yüzeyinde bir üs kuracaksın.</p>
+    <p>Metal ve buz topla → yapılar inşa et → oksijen ve enerji üret.</p>
+    <p class="keys">WASD yürü · E topla/kullan · X kaz · 1-3 alet seç · U yükselt · F sök<br>Shift koş · Space zıpla · C kamera · Z shiftlock · M CML · Q sağlık · V keşif aracı · Esc menü<br>Önce çalışma masası kur · inşa menüsü masada açılır (E) · Roket: Dünya ↔ Mars</p>
+    <p class="rad">☢ Güneş parçacık olayları (SPE) radyasyon dalgası getirir – çadıra veya kapsüle sığın!<br>📡 Dünya ile NASA Derin Uzay Ağı (DSN) üzerinden konuşursun · 🚙 Keşif aracın seninle gelir</p>
+    <div class="menuCol">
+      <button id="btnPlay">Oyna</button>
+      <button id="btnContinue">Devam et</button>
+      <button id="btnCoop">Çok oyunculu (4 kişi)</button>
+      <button id="btnSettings">Ayarlar</button>
+    </div>
+  </div>
+  <div class="box panel" id="diffBox" style="display:none" data-noi18n>
+    <h2 id="diffT">Zorluk</h2>
+    <button class="diffBtn" data-d="kolay"></button>
+    <button class="diffBtn" data-d="orta"></button>
+    <button class="diffBtn" data-d="zor"></button>
+    <button id="diffBack" style="margin-top:8px">Geri</button>
+  </div>
+  <div class="box panel" id="coopBox" style="display:none">
+    <h2>Çok oyunculu</h2>
+    <p>Aynı sunucuya bağlanan en fazla 4 oyuncu aynı oda kodunda buluşur ve birbirini görür. Dünya şimdilik her oyuncuda ayrıdır.</p>
+    <div style="display:grid;gap:8px;margin:12px 0">
+      <input id="coopUrl" placeholder="Sunucu adresi, örn. https://sunucun.example.com" style="padding:8px;border-radius:6px;border:1px solid #6a4a3a;background:#1a1410;color:#eadfd2">
+      <input id="coopName" maxlength="16" placeholder="Adın" style="padding:8px;border-radius:6px;border:1px solid #6a4a3a;background:#1a1410;color:#eadfd2">
+      <input id="coopRoom" maxlength="4" placeholder="Oda kodu (boş bırakırsan yeni oda açılır)" style="padding:8px;border-radius:6px;border:1px solid #6a4a3a;background:#1a1410;color:#eadfd2;text-transform:uppercase">
+    </div>
+    <div id="coopMsg" style="min-height:18px;color:#f0a77e;font-size:12px"></div>
+    <div class="menuCol">
+      <button id="coopGo">Bağlan ve başla</button>
+      <button id="coopBack">Geri</button>
+    </div>
+  </div>
+  <div class="box panel" id="menuPause" style="display:none">
+    <h2>Duraklatıldı</h2>
+    <p>Oyun durduruldu. Devam etmek için Esc.</p>
+    <div class="menuCol">
+      <button id="pResume">Devam</button>
+      <button id="pSave">Kaydet</button>
+      <button id="pSettings">Ayarlar</button>
+      <button id="pMain">Ana menü (kaydet ve çık)</button>
+    </div>
+  </div>
+  <div class="box panel" id="menuSettings" style="display:none">
+    <h2>Ayarlar</h2>
+    <div class="tabs">
+      <button class="tabBtn on" data-tab="av">Ses ve Görsel</button>
+      <button class="tabBtn" data-tab="gr">Grafik</button>
+      <button class="tabBtn" data-tab="kt">Kontroller</button>
+      <button class="tabBtn" data-tab="km">Kamera</button>
+    </div>
+    <div class="tabp" id="tab-av">
+      <label>Ses seviyesi <span id="vVol"></span><input type="range" id="setVol" min="0" max="100"></label>
+      <label>Parlaklık <span id="vBright"></span><input type="range" id="setBright" min="60" max="140"></label>
+      <label>Dil / Language<select id="setLang"><option value="tr">Türkçe</option><option value="en">English</option><option value="es">Español</option><option value="ko">한국어</option><option value="de">Deutsch</option></select></label>
+      <label>Telsiz modu (çok oyunculu)<select id="setRadio"><option value="vad">Sesle etkinleştir (otomatik)</option><option value="ptt">Bas-konuş (T basılı tut)</option></select></label>
+      <div class="note">Sesler: NASA'nın açık ses arşivinden (Perseverance, InSight, Artemis I) gerçek kayıtlar + Quindar tonları.</div>
+    </div>
+    <div class="tabp" id="tab-gr" hidden>
+      <label>Çözünürlük (render ölçeği)<select id="setRes"><option value="0.5">Düşük (%50)</option><option value="0.75">Orta (%75)</option><option value="1">Yüksek (%100)</option><option value="1.5">Çok yüksek (%150)</option></select></label>
+      <label>Gölgelendirme<select id="setShadow"><option value="0">Kapalı</option><option value="1">Düşük (yapılar ve sen)</option><option value="2">Yüksek (doğal nesneler dahil)</option></select></label>
+      <label>Parçacık boyutu <span id="vPart"></span><input type="range" id="setParticle" min="0.5" max="2.5" step="0.1"></label>
+      <label>Kare hızı (FPS)<select id="setFps"><option value="30">30</option><option value="60">60</option><option value="120">120</option><option value="0">Sınırsız</option></select></label>
+      <label>Ayrıntı seviyesi (eğri yüzeyler)<select id="setDetail"><option value="1">Düşük</option><option value="2">Orta</option><option value="3">Yüksek</option></select></label>
+      <label>Görüş mesafesi <span id="vDraw"></span><input type="range" id="setDraw" min="0.6" max="1.5" step="0.1"></label>
+      <label>Parlama (ışık efektleri) <span id="vGlow"></span><input type="range" id="setGlow" min="0" max="1.5" step="0.1"></label>
+      <button id="btnMaxGfx">En yüksek kaliteye al</button>
+      <div class="note" id="gfxNote">Yüksek çözünürlük ve FPS ayarları ekran kartını daha fazla zorlar.</div>
+    </div>
+    <div class="tabp" id="tab-kt" hidden>
+      <div class="note">Bir tuşa tıklayıp yeni tuşa bas. Atanan tuş başka bir işlemdeyse yer değiştirir.</div>
+      <div id="bindList"></div>
+      <button id="bindReset">Kontrolleri Sıfırla</button>
+      <label>Fare hassasiyeti <span id="vSens"></span><input type="range" id="setSens" min="0.4" max="2.5" step="0.1"></label>
+      <label class="chk"><input type="checkbox" id="setInvY"> Dikey ekseni ters çevir</label>
+    </div>
+    <div class="tabp" id="tab-km" hidden>
+      <label>Açılış görünümü<select id="setView"><option value="tps">Üçüncü şahıs</option><option value="fp">Birinci şahıs (kask)</option></select></label>
+      <label>Dokunmatik kontroller<select id="setTouch"><option value="auto">Otomatik</option><option value="on">Açık</option><option value="off">Kapalı</option></select></label>
+      <label>Görüş açısı <span id="vFov"></span><input type="range" id="setFov" min="45" max="90"></label>
+      <div class="note">Kamera her zaman duvarların, odaların ve nesnelerin içinden geçmez; ortamın dışına çıkmaz.</div>
+    </div>
+    <button id="setBack">Geri</button>
+  </div>
+</div>
+<div id="sleepOv"><div>😴 Uyuyorsun…<br><small>Uyanmak için E veya Space</small></div></div>
+<div id="helmet"></div>
+<div id="xhair"></div>
+<div id="slockTag">🔒 Shiftlock · Z</div>
+<div id="cmlTag">CML 1</div>
+<div id="radio" data-noi18n><div class="rAnt"></div><div class="rKnob"></div><div class="rBody"><div class="rBrand">MARS·COM</div><div class="rLed"></div>
+  <div class="rScreen"><div id="rL1">CH ----</div><div id="rL2">—</div><div id="rL3"></div><div class="rWave"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="rGrill"></div><div class="rPtt"></div><div class="rMute" id="rMute"></div></div></div>
+<div id="geigerTag" data-noi18n></div>
+<div id="coopHud"></div>
+<div id="cml"></div>
+<div id="vitBox"></div>
+<div id="hotbar"></div>
+<div id="soilMeter" data-noi18n style="display:none"></div>
+<div id="guide" data-noi18n style="display:none"></div>
+<div id="touchUI">
+  <div id="joy"><div id="joyKnob"></div></div>
+  <div id="tMenu">
+    <button class="tb" data-act="pause">Duraklat</button>
+    <button class="tb" data-act="guide">Kılavuz</button>
+    <button class="tb" data-act="eat">Yemek</button>
+    <button class="tb" data-act="drink">Su</button>
+    <button class="tb" data-act="inventory">Envanter</button>
+    <button class="tb" data-act="cml">CML</button>
+    <button class="tb" data-act="vitals">Sağlık</button>
+    <button class="tb" data-act="view">Kamera</button>
+    <button class="tb" data-act="shiftlock">Shiftlock</button>
+    <button class="tb" data-act="upgrade">Yükselt</button>
+    <button class="tb" data-act="dismantle">Sök</button>
+    <button class="tb" data-act="save">Kaydet</button>
+    <button class="tb" data-act="help">Yardım</button>
+    <button class="tb" data-act="tool1">Alet 1</button>
+    <button class="tb" data-act="tool2">Alet 2</button>
+    <button class="tb" data-act="tool3">Alet 3</button>
+    <button class="tb" data-act="rover">Rover</button>
+    <button class="tb" data-act="talk">📻 Telsiz</button>
+    <button class="tb" id="tMoreClose">Kapat</button>
+  </div>
+  <div id="tBtns">
+    <button class="tb" data-act="run">Koş</button>
+    <button class="tb big" data-act="jump">Zıpla</button>
+    <button class="tb big" data-act="dig">Kaz</button>
+    <button class="tb big" data-act="interact">Etkileşim</button>
+    <button class="tb" id="tMore">☰ Diğer</button>
+  </div>
+</div>
+<div id="rotHint">Daha iyi deneyim için telefonu yatay çevirin</div>
+<div id="vig"></div><div id="radfx"></div><div id="fade"></div>
+<div id="dead"><div class="panel" style="text-align:center;max-width:470px;padding:30px 34px"><h2 style="color:#ff6b5a;font-size:30px;margin-bottom:10px">Öldün.</h2><p id="deadcause" style="color:#f0d8cc;font-size:15px;margin:8px 0 18px"></p><button id="respawn" style="width:auto;display:inline-block;padding:12px 22px;font-size:14px;text-align:center">Yeniden canlan<br><small style="font-weight:500;opacity:.85">(Oyun kaldığı yerden devam eder.)</small></button></div></div>
+<div id="hud">
+  <div id="brand" class="panel">MARS <small>COLONY BUILDER · v1.46</small></div>
+  <div id="comm" data-noi18n><div class="cb"><div class="ch"><i></i><span id="commH"></span></div><div class="cs" id="commS"></div><div id="commT"></div><div class="cd" id="commD"></div></div></div>
+  <div id="timeui" class="panel"></div>
+  <div id="radwarn" data-noi18n></div>
+  <div id="bars" class="panel">
+    <div class="bar"><label>SAĞLIK</label><div class="trk"><i id="hpf" style="background:linear-gradient(90deg,#b8322a,#ff6b5a)"></i></div><b id="hpt">100/100</b></div>
+    <div class="bar"><label>AÇLIK</label><div class="trk"><i id="fdf" style="background:linear-gradient(90deg,#c9801f,#f0b04a)"></i></div><b id="fdt">100/100</b></div>
+    <div class="bar"><label>SUSUZLUK</label><div class="trk"><i id="thf" style="background:linear-gradient(90deg,#2a7ab8,#6ac4f0)"></i></div><b id="tht">100/100</b></div>
+    <div class="bar"><label>STAMINA</label><div class="trk"><i id="stf" style="background:linear-gradient(90deg,#c9b92a,#f4ea5a)"></i></div><b id="stt">100/100</b></div>
+  </div>
+  <div id="stormwarn">⚠ TOZ FIRTINASI</div>
+  <div id="stats">
+    <div class="panel stat">ENERJİ<b id="energy">90</b></div>
+    <div class="panel stat">METAL<b id="metal">55</b></div>
+    <div class="panel stat">BAKIR<b id="copper">0</b></div>
+    <div class="panel stat">DEMİR<b id="iron">0</b></div>
+    <div class="panel stat">OKSİJEN<b id="oxygen">55</b></div>
+    <div class="panel stat">SU<b id="water">15</b></div>
+    <div class="panel stat">YEMEK<b id="foodstk">20</b></div>
+    <div class="panel stat">BİLİM<b id="science">0</b></div>
+    <div class="panel stat">KOLONİ<b id="people">1</b></div>
+  </div>
+  <div id="objectives" class="panel">
+    <h4>GÖREVLER</h4>
+    <ul id="objlist" data-noi18n></ul>
+  </div>
+  <div id="minimap"><canvas id="mmap"></canvas></div>
+  <div id="help" class="panel">
+    <b>KONTROLLER (P ile kapat)</b><br>
+    WASD yürü · Shift koş · Space zıpla<br>
+    E topla / kullan / içeri gir · X kaz · 1-3 alet seç<br>
+    Tık inşa et · U yükselt · F sök<br>
+    G yemek ye · H su iç<br>
+    I envanter · P kontroller<br>İnşa menüsü: çalışma masasında E<br>
+    R kaydet · L yükle · V keşif aracı komutu<br>
+    C birinci şahıs (kask) ↔ üçüncü şahıs<br>Fare sürükle: kamera · Tekerlek: yakınlaştır<br><br>
+    <span style="color:#f0a77e">Üretim ve inşa için önce Çalışma Masası kur:<br>67 metal + 45 su + 46 altın (sarı kristal)</span>
+  </div>
+  <div id="inv" class="panel">
+    <h3>ENVANTER <span style="color:#c0b0a0;font-weight:400">(I)</span></h3>
+    <div id="invrows"></div>
+    <div id="invbtns"><button id="btnEat">Yemek ye (G) <span>-10</span></button><button id="btnDrink">Su iç (H) <span>-10</span></button></div>
+    <div id="invtools"></div>
+    <div id="suit"></div>
+    <div id="build">
+      <h3 style="margin:12px 0 8px;font-size:12px;letter-spacing:1.2px;color:#e9a27d">İLK ADIM</h3>
+      <button data-type="bench" class="active">Çalışma masası + çadır <span>67 metal · 45 su · 46 altın</span></button>
+      <div style="font-size:10.5px;color:#a09080;line-height:1.4">Kurmak için boş bir yere bakıp tıkla. Diğer yapılar çalışma masasındaki inşa menüsünden kurulur.</div>
+    </div>
+  </div>
+  <div id="wbp" class="panel">
+    <h3>ÇALIŞMA MASASI</h3>
+    <button id="craft-pickaxe">Kazma <span>15 metal</span></button>
+    <button id="craft-shovel">Kürek <span>12 metal</span></button>
+    <button id="craft-scanner">Tarayıcı <span>20 metal + 3 bilim</span></button>
+    <button id="craft-soil">Toprak ölçer <span>18 metal + 6 bakır</span></button>
+    <button id="craft-hoe">Çapa <span>10 metal</span></button>
+    <button id="craft-bag">Çanta yükselt <span>20 altın · +15</span></button>
+    <h3 style="margin:12px 0 8px;color:#e9a27d">DEVRE &amp; ROKET</h3>
+    <button id="craft-resistor">Direnç <span>3 bakır · 1 demir</span></button>
+    <button id="craft-capacitor">Kondansatör <span>2 bakır · 3 demir</span></button>
+    <button id="craft-ic">Entegre devre <span>10 metal · 4 altın · 2 bakır</span></button>
+    <button id="craft-kit">Onarım kiti <span>8 metal · 2 bakır</span></button>
+    <button id="craft-spare-hull">Yedek gövde kalkanı <span>25 metal · 10 demir</span></button>
+    <button id="craft-spare-power">Yedek güç hücresi <span>20 metal · 15 bakır · 5 altın</span></button>
+    <button id="craft-spare-nav">Yedek yönlendirme ünitesi <span>18 metal · 8 altın</span></button>
+    <h3 style="margin:12px 0 8px;color:#9fe870">KOSTÜM & RADYASYON</h3>
+    <button id="craft-geiger">☢ Geiger sayacı <span>14 metal · 8 bakır · 1 kondansatör</span></button>
+    <button id="suit-up">🧑‍🚀 Kostümü yükselt <span></span></button>
+    <div style="margin-top:4px;font-size:10.5px;color:#a09080;line-height:1.4">Geiger sayacı: anlık doz hızını gösterir ve tıkırdar · Kostüm her seviyede radyasyona daha dayanıklı · Seviye 6: radyasyon geçirmez + çanta +20</div>
+    <div style="margin-top:8px;font-size:11px;color:#c0b0a0;line-height:1.45">Kazma: gömülü cevher kaz · Kürek: daha hızlı kazı<br>Tarayıcı: yakındaki gömülüleri göster</div>
+    <h3 style="margin:12px 0 8px;color:#e9a27d">İNŞA MENÜSÜ</h3>
+    <div id="build2">
+      <button data-type="watercap">Su kapsülü <span>30 metal · 20 demir</span></button>
+      <button data-type="foodcap">Yiyecek kapsülü <span>30 metal · 20 bakır</span></button>
+      <button data-type="hab">Yaşam kapsülü <span>40 metal</span></button>
+      <button data-type="solar">Güneş paneli <span>20 metal</span></button>
+      <button data-type="green">Tarım serası <span>30 metal</span></button>
+      <button data-type="lab">Araştırma <span>35 metal</span></button>
+      <button data-type="ice">Buz işleyici <span>45 metal</span></button>
+      <button data-type="storage">Depo <span>25 metal</span></button>
+      <button data-type="crate">Depolama kutusu <span>12 metal · 8 bakır</span></button>
+      <button data-type="antenna">Anten <span>60 metal</span></button>
+    </div>
+    <div style="margin-top:6px;font-size:10.5px;color:#a09080;line-height:1.4">Yapıyı seç → panel kapanır → kurmak istediğin yere bakıp tıkla</div>
+    <div id="suit2" style="margin-top:10px;font-size:11.5px"></div>
+    <div style="margin-top:8px;font-size:10.5px;color:#a09080">Kapatmak için E / Esc</div>
+  </div>
+  <div id="shp" class="panel">
+    <h3>🥫 DÜKKAN ÇALIŞANI – ERZAK DÜKKANI</h3>
+    <div id="shpmsg"></div>
+    <button id="shp-food">Paket yemek ×5 <span>12 altın</span></button>
+    <button id="shp-water">Şişe su ×5 <span>10 altın</span></button>
+    <button id="shp-gift">🎁 Hediye paketi <span>ücretsiz · bir kez</span></button>
+    <div id="shpseeds" data-noi18n></div>
+    <button id="shp-bag">Çanta yükselt <span>20 altın · +15</span></button>
+    <div id="shpstock"></div>
+    <div style="margin-top:8px;font-size:10.5px;color:#a09080;line-height:1.45">Paket erzak sadece Mars'taki çadırında yenir: çadıra gir, G ile ye, H ile iç.<br>Kapatmak için E / Esc</div>
+  </div>
+  <div id="rkp" class="panel">
+    <h3>ROKET KONTROL PANELİ</h3>
+    <button id="rk-launch">🚀 Fırlat</button>
+    <button id="rk-exit">Dışarı çık (E)</button>
+    <div id="rkparts" style="margin-top:8px;font-size:11.5px;line-height:1.45"></div>
+    <div style="margin-top:8px;font-size:11px;color:#c0b0a0;line-height:1.45">Kabinde konaklayabilirsin: sağlık ve stamina hızlı yenilenir, radyasyon dalgalarından korunursun.</div>
+  </div>
+  <div id="farmp" class="panel" data-noi18n></div>
+  <div id="lpp" class="panel">
+    <h3>FIRLATMA KONTROL İSTASYONU</h3>
+    <div id="lpbody" style="font-size:11.5px;line-height:1.5"></div>
+    <div style="margin-top:8px;font-size:10.5px;color:#a09080;line-height:1.45">Fırlatmayı roketin kapsülünden veya mekiğin pilot panelinden yap. Kapatmak için E / Esc.</div>
+  </div>
+  <div id="tools" class="panel">
+    ⛏ Kazma: <b id="tool-pick">0</b> &nbsp; 🪓 Kürek: <b id="tool-shovel">0</b> &nbsp; 📡 Tarayıcı: <b id="tool-scan">0</b> &nbsp; 🧪 Tüp: <b id="tool-samp">0</b>
+  </div>
+  <div id="message" data-noi18n></div>
+  <div id="prompt" data-noi18n></div>
+  <div id="npcl"></div>
+</div>
+<script src="game.js"></script>
+</body>
+</html>
